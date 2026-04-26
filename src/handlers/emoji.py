@@ -44,35 +44,26 @@ async def handle_entities(message: Message, bot: Bot):
         return
 
     # Super robust approach: Use aiogram's built-in HTML generator
-    # It already handles all nesting, escaping, and formatting correctly.
-    # We just need to transform its <tg-emoji> tags to our format.
     import re
-    
-    # Get text as HTML (this will include <tg-emoji> tags for premium emojis)
     html_text = message.html_text
     
-    # We want to replace:
-    # <tg-emoji emoji-id="ID">EMOJI</tg-emoji> 
-    # with:
-    # EMOJI [<code>ID</code>]
-    
+    # Use temporary markers for IDs to avoid them being caught by general <code> replacement
     pattern = re.compile(r'<tg-emoji emoji-id="(.*?)">(.*?)</tg-emoji>')
-    
-    # Replace using regex
     processed_html = pattern.sub(r'\2 [<code>\1</code>]', html_text)
     
-    # Convert tags to symbols for copy-pasting
+    # Convert formatting tags to symbols (EXCEPT <code> for our IDs)
     processed_html = processed_html.replace("<b>", "**").replace("</b>", "**")
     processed_html = processed_html.replace("<i>", "*").replace("</i>", "*")
     processed_html = processed_html.replace("<u>", "__").replace("</u>", "__")
     processed_html = processed_html.replace("<s>", "~~").replace("</s>", "~~")
     processed_html = processed_html.replace("<tg-spoiler>", "||").replace("</tg-spoiler>", "||")
-    processed_html = processed_html.replace("<code>", "`").replace("</code>", "`")
+    
+    # For actual code/pre blocks in the original message, convert them to backticks
+    # (IDs are already wrapped in <code>, but we'll leave them alone)
     processed_html = processed_html.replace("<pre>", "```\n").replace("</pre>", "\n```")
     
     def format_blockquote(match):
         content = match.group(1)
-        # Add > to each line
         lines = content.strip().split("\n")
         return "\n".join(f"> {line}" for line in lines)
 
