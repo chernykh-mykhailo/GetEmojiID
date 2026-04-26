@@ -25,63 +25,60 @@ async def handle_sticker(message: Message, bot: Bot):
 
 @router.message(F.entities)
 async def handle_entities(message: Message, bot: Bot):
-    custom_emojis = [e for e in message.entities if e.type == "custom_emoji"]
+    entities = message.entities or []
+    custom_emojis = [e for e in entities if e.type == "custom_emoji"]
     
-    if not custom_emojis:
+    if not entities:
         return
 
-    is_single_emoji = len(custom_emojis) == 1 and len(message.text.strip()) <= 3
-    
-    if is_single_emoji:
+    # Single emoji shortcut
+    if len(custom_emojis) == 1 and len(entities) == 1 and len(message.text.strip()) <= 3:
         emoji_id = custom_emojis[0].custom_emoji_id
         stickers = await bot.get_custom_emoji_stickers([emoji_id])
         pack_name = stickers[0].set_name if stickers else None
-        
         builder = InlineKeyboardBuilder()
         builder.button(text="Just this one", callback_data=f"one_{emoji_id}")
         if pack_name:
             builder.button(text="Whole pack", callback_data=f"pack_{pack_name}")
-        
-        await message.answer(
-            "Found a premium emoji! What do you want to get?",
-            reply_markup=builder.as_markup()
-        )
+        await message.answer("Found a premium emoji! What do you want to get?", reply_markup=builder.as_markup())
         return
 
-    # To safely handle HTML and Telegram's UTF-16 offsets, we encode to utf-16-le
-    from aiogram.utils.markdown import html_decoration as hd
+    # Super robust approach: Use aiogram's built-in HTML generator
+    # It already handles all nesting, escaping, and formatting correctly.
+    # We just need to transform its <tg-emoji> tags to our format.
+    import re
     
-    text = message.text
-    # Each UTF-16 code unit is 2 bytes in utf-16-le
-    text_utf16 = text.encode("utf-16-le")
+    # Get text as HTML (this will include <tg-emoji> tags for premium emojis)
+    html_text = message.html_text
     
-    last_offset = 0
-    parts = []
+    # We want to replace:
+    # <tg-emoji emoji-id="ID">EMOJI</tg-emoji> 
+    # with:
+    # EMOJI [<code>ID</code>]
     
-    # Sort entities by offset to process them in order
-    sorted_entities = sorted(custom_emojis, key=lambda e: e.offset)
+    pattern = re.compile(r'<tg-emoji emoji-id="(.*?)">(.*?)</tg-emoji>')
     
-    for ent in sorted_entities:
-        # Calculate byte offsets (Telegram offset * 2)
-        start_byte = ent.offset * 2
-        end_byte = (ent.offset + ent.length) * 2
-        
-        # Add escaped text before the emoji
-        prev_text = text_utf16[last_offset*2:start_byte].decode("utf-16-le")
-        parts.append(hd.quote(prev_text))
-        
-        # Add the emoji itself and its ID in code tags
-        emoji_char = text_utf16[start_byte:end_byte].decode("utf-16-le")
-        parts.append(f"{emoji_char} [<code>{ent.custom_emoji_id}</code>]")
-        
-        last_offset = ent.offset + ent.length
+    # Replace using regex
+    processed_html = pattern.sub(r'\2 [<code>\1</code>]', html_text)
     
-    # Add the remaining text
-    remaining_text = text_utf16[last_offset*2:].decode("utf-16-le")
-    parts.append(hd.quote(remaining_text))
+    # Convert tags to symbols for copy-pasting
+    processed_html = processed_html.replace("<b>", "**").replace("</b>", "**")
+    processed_html = processed_html.replace("<i>", "*").replace("</i>", "*")
+    processed_html = processed_html.replace("<u>", "__").replace("</u>", "__")
+    processed_html = processed_html.replace("<s>", "~~").replace("</s>", "~~")
+    processed_html = processed_html.replace("<tg-spoiler>", "||").replace("</tg-spoiler>", "||")
+    processed_html = processed_html.replace("<code>", "`").replace("</code>", "`")
+    processed_html = processed_html.replace("<pre>", "```\n").replace("</pre>", "\n```")
     
-    final_text = "".join(parts)
-    await message.answer(f"<b>Processed text:</b>\n\n{final_text}", parse_mode="HTML")
+    def format_blockquote(match):
+        content = match.group(1)
+        # Add > to each line
+        lines = content.strip().split("\n")
+        return "\n".join(f"> {line}" for line in lines)
+
+    processed_html = re.sub(r'<blockquote>(.*?)</blockquote>', format_blockquote, processed_html, flags=re.DOTALL)
+
+    await message.answer(f"<b>Processed text with symbols:</b>\n\n{processed_html}", parse_mode="HTML")
 
 @router.callback_query(F.data.startswith("one_"))
 async def cb_one(callback: CallbackQuery, bot: Bot):
