@@ -69,7 +69,22 @@ async def handle_entities(message: Message, bot: Bot):
 
     processed_html = re.sub(r'<blockquote>(.*?)</blockquote>', format_blockquote, processed_html, flags=re.DOTALL)
 
-    await message.answer(f"<b>Processed text with symbols:</b>\n\n{processed_html}", parse_mode="HTML")
+    full_response = f"<b>Processed text with symbols:</b>\n\n{processed_html}"
+    
+    if len(full_response) <= 4096:
+        await message.answer(full_response, parse_mode="HTML")
+    else:
+        # Split by lines as a simple safety measure
+        lines = processed_html.split("\n")
+        chunk = "<b>Processed text with symbols:</b>\n\n"
+        for line in lines:
+            if len(chunk) + len(line) + 1 > 4000:
+                await message.answer(chunk, parse_mode="HTML")
+                chunk = ""
+            chunk += line + "\n"
+        
+        if chunk.strip():
+            await message.answer(chunk, parse_mode="HTML")
 
 @router.callback_query(F.data.startswith("one_"))
 async def cb_one(callback: CallbackQuery, bot: Bot):

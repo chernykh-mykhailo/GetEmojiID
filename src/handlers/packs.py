@@ -14,14 +14,20 @@ async def handle_pack_link(message: Message, bot: Bot):
     if match:
         pack_name = match.group(1).strip().strip('/') # Clean trailing slashes
         wait_msg = await message.answer(f"🔄 Fetching pack info for <code>{pack_name}</code>...", parse_mode="HTML")
-        result = await format_emoji_list(bot, pack_name)
-        await wait_msg.edit_text(result, parse_mode="HTML")
+        results = await format_emoji_list(bot, pack_name)
+        
+        await wait_msg.edit_text(results[0], parse_mode="HTML")
+        for res in results[1:]:
+            await message.answer(res, parse_mode="HTML")
 
 @router.callback_query(F.data.startswith("pack_"))
 async def cb_pack(callback: CallbackQuery, bot: Bot):
     # Use slicing instead of split to handle pack names with underscores
     pack_name = callback.data[5:] 
     await callback.message.edit_text(f"🔄 Fetching pack info for <code>{pack_name}</code>...", parse_mode="HTML")
-    result = await format_emoji_list(bot, pack_name)
-    await callback.message.edit_text(result, parse_mode="HTML")
+    results = await format_emoji_list(bot, pack_name)
+    
+    await callback.message.edit_text(results[0], parse_mode="HTML")
+    for res in results[1:]:
+        await callback.message.answer(res, parse_mode="HTML")
     await callback.answer()
