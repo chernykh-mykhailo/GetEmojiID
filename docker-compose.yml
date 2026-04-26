@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  emoji-bot:
+    build: .
+    container_name: emoji_id_bot
+    restart: always
+    env_file:
+      - .env
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
