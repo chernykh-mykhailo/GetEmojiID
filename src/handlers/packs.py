@@ -5,8 +5,8 @@ from src.utils.formatter import format_emoji_list
 
 router = Router()
 
-# More robust pattern for Telegram links (supports dots, underscores, and full URLs)
-PACK_LINK_PATTERN = re.compile(r"(?:https?://)?(?:t\.me/addemoji/|tg://addemoji\?set=)([a-zA-Z0-9_\.]+)")
+# More robust pattern for Telegram links (supports emoji and regular stickers)
+PACK_LINK_PATTERN = re.compile(r"(?:https?://)?(?:t\.me/(?:addemoji|addstickers)/|tg://(?:addemoji|addstickers)\?set=)([a-zA-Z0-9_\.]+)")
 
 @router.message(F.text.regexp(PACK_LINK_PATTERN))
 async def handle_pack_link(message: Message, bot: Bot):

@@ -6,22 +6,31 @@ router = Router()
 
 @router.message(F.sticker)
 async def handle_sticker(message: Message, bot: Bot):
-    if not message.sticker.is_custom_emoji:
-        await message.answer("This is a regular sticker, not a premium emoji.")
-        return
-
-    emoji_id = message.sticker.custom_emoji_id
-    pack_name = message.sticker.set_name
-    
+    sticker = message.sticker
+    pack_name = sticker.set_name
     builder = InlineKeyboardBuilder()
-    builder.button(text="Just this one", callback_data=f"one_{emoji_id}")
-    if pack_name:
-        builder.button(text="Whole pack", callback_data=f"pack_{pack_name}")
-    
-    await message.answer(
-        "Found a premium emoji sticker! What do you want to get?",
-        reply_markup=builder.as_markup()
-    )
+
+    if sticker.is_custom_emoji:
+        emoji_id = sticker.custom_emoji_id
+        builder.button(text="Just this one", callback_data=f"one_{emoji_id}")
+        if pack_name:
+            builder.button(text="Whole pack", callback_data=f"pack_{pack_name}")
+        
+        await message.answer(
+            "Found a premium emoji sticker! What do you want to get?",
+            reply_markup=builder.as_markup()
+        )
+    else:
+        # Regular sticker
+        if pack_name:
+            builder.button(text="Whole pack", callback_data=f"pack_{pack_name}")
+        
+        response = (
+            f"<b>Sticker Info:</b>\n"
+            f"<b>File ID:</b> <code>{sticker.file_id}</code>\n"
+            f"<b>Unique ID:</b> <code>{sticker.file_unique_id}</code>"
+        )
+        await message.answer(response, reply_markup=builder.as_markup(), parse_mode="HTML")
 
 @router.message(F.entities)
 async def handle_entities(message: Message, bot: Bot):
