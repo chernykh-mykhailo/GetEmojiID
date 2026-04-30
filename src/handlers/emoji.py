@@ -10,7 +10,7 @@ async def handle_sticker(message: Message, bot: Bot):
     pack_name = sticker.set_name
     builder = InlineKeyboardBuilder()
 
-    if sticker.is_custom_emoji:
+    if sticker.type == "custom_emoji":
         emoji_id = sticker.custom_emoji_id
         builder.button(text="Just this one", callback_data=f"one_{emoji_id}")
         if pack_name:
