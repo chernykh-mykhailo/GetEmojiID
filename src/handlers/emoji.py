@@ -32,6 +32,46 @@ async def handle_sticker(message: Message, bot: Bot):
         )
         await message.answer(response, reply_markup=builder.as_markup(), parse_mode="HTML")
 
+@router.message(F.animation)
+async def handle_animation(message: Message, bot: Bot):
+    animation = message.animation
+    response = (
+        f"<b>Animation (GIF) Info:</b>\n"
+        f"<b>File ID:</b> <code>{animation.file_id}</code>\n"
+        f"<b>Unique ID:</b> <code>{animation.file_unique_id}</code>"
+    )
+    await message.answer(response, parse_mode="HTML")
+
+@router.message(F.photo | F.video | F.document | F.audio | F.voice | F.video_note)
+async def handle_general_media(message: Message, bot: Bot):
+    if message.photo:
+        media = message.photo[-1]
+        label = "Photo"
+    elif message.video:
+        media = message.video
+        label = "Video"
+    elif message.document:
+        media = message.document
+        label = "Document"
+    elif message.audio:
+        media = message.audio
+        label = "Audio"
+    elif message.voice:
+        media = message.voice
+        label = "Voice"
+    elif message.video_note:
+        media = message.video_note
+        label = "Video Note"
+    else:
+        return
+
+    response = (
+        f"<b>{label} Info:</b>\n"
+        f"<b>File ID:</b> <code>{media.file_id}</code>\n"
+        f"<b>Unique ID:</b> <code>{media.file_unique_id}</code>"
+    )
+    await message.answer(response, parse_mode="HTML")
+
 @router.message(F.entities)
 async def handle_entities(message: Message, bot: Bot):
     entities = message.entities or []
