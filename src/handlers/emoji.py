@@ -12,14 +12,14 @@ async def handle_sticker(message: Message, bot: Bot):
 
     if sticker.type == "custom_emoji":
         emoji_id = sticker.custom_emoji_id
-        builder.button(text="Just this one", callback_data=f"one_{emoji_id}")
         if pack_name:
             builder.button(text="Whole pack", callback_data=f"pack_{pack_name}")
         
-        await message.answer(
-            "Found a premium emoji sticker! What do you want to get?",
-            reply_markup=builder.as_markup()
+        response = (
+            f"<b>Emoji ID:</b> <code>{emoji_id}</code> "
+            f"<tg-emoji emoji-id=\"{emoji_id}\">{sticker.emoji}</tg-emoji>"
         )
+        await message.answer(response, reply_markup=builder.as_markup(), parse_mode="HTML")
     else:
         # Regular sticker
         if pack_name:
@@ -45,11 +45,17 @@ async def handle_entities(message: Message, bot: Bot):
         emoji_id = custom_emojis[0].custom_emoji_id
         stickers = await bot.get_custom_emoji_stickers([emoji_id])
         pack_name = stickers[0].set_name if stickers else None
+        emoji_char = stickers[0].emoji if stickers else "?"
+        
         builder = InlineKeyboardBuilder()
-        builder.button(text="Just this one", callback_data=f"one_{emoji_id}")
         if pack_name:
             builder.button(text="Whole pack", callback_data=f"pack_{pack_name}")
-        await message.answer("Found a premium emoji! What do you want to get?", reply_markup=builder.as_markup())
+            
+        response = (
+            f"<b>Emoji ID:</b> <code>{emoji_id}</code> "
+            f"<tg-emoji emoji-id=\"{emoji_id}\">{emoji_char}</tg-emoji>"
+        )
+        await message.answer(response, reply_markup=builder.as_markup(), parse_mode="HTML")
         return
 
     # Super robust approach: Use aiogram's built-in HTML generator
