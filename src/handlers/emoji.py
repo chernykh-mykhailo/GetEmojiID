@@ -18,7 +18,7 @@ async def handle_sticker(message: Message, bot: Bot):
             builder.button(text="Whole pack", callback_data=f"pack_{pack_name}")
         
         settings = await get_user_settings(message.from_user.id)
-        suffix = get_emoji_suffix(sticker.emoji, settings["show_bound_emoji"], settings["show_emoji_text"])
+        suffix = get_emoji_suffix(sticker.emoji, settings["show_bound_emoji"])
         response = (
             f"<b>Emoji ID:</b> <code>{emoji_id}</code> "
             f"<tg-emoji emoji-id=\"{emoji_id}\">{sticker.emoji}</tg-emoji>{suffix}"
@@ -96,7 +96,7 @@ async def handle_entities(message: Message, bot: Bot):
             builder.button(text="Whole pack", callback_data=f"pack_{pack_name}")
             
         settings = await get_user_settings(message.from_user.id)
-        suffix = get_emoji_suffix(emoji_char, settings["show_bound_emoji"], settings["show_emoji_text"])
+        suffix = get_emoji_suffix(emoji_char, settings["show_bound_emoji"])
         response = (
             f"<b>Emoji ID:</b> <code>{emoji_id}</code> "
             f"<tg-emoji emoji-id=\"{emoji_id}\">{emoji_char}</tg-emoji>{suffix}"
@@ -110,12 +110,11 @@ async def handle_entities(message: Message, bot: Bot):
     
     settings = await get_user_settings(message.from_user.id)
     show_bound = settings["show_bound_emoji"]
-    show_text = settings["show_emoji_text"]
     
     def replace_emoji(match):
         emoji_id = match.group(1)
         emoji_char = match.group(2)
-        suffix = get_emoji_suffix(emoji_char, show_bound, show_text)
+        suffix = get_emoji_suffix(emoji_char, show_bound)
         return f"{emoji_char}{suffix} [<code>{emoji_id}</code>]"
         
     pattern = re.compile(r'<tg-emoji emoji-id="(.*?)">(.*?)</tg-emoji>')
@@ -164,7 +163,7 @@ async def cb_one(callback: CallbackQuery, bot: Bot):
     emoji_char = stickers[0].emoji if stickers else "?"
     
     settings = await get_user_settings(callback.from_user.id)
-    suffix = get_emoji_suffix(emoji_char, settings["show_bound_emoji"], settings["show_emoji_text"])
+    suffix = get_emoji_suffix(emoji_char, settings["show_bound_emoji"])
     
     response = f"<b>Emoji ID:</b>\n1) <code>{emoji_id}</code> <tg-emoji emoji-id=\"{emoji_id}\">{emoji_char}</tg-emoji>{suffix}"
     await callback.message.edit_text(response, parse_mode="HTML")

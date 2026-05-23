@@ -10,15 +10,10 @@ def get_settings_keyboard(settings: dict):
     builder = InlineKeyboardBuilder()
     
     bound_status = "✅" if settings["show_bound_emoji"] else "❌"
-    text_status = "✅" if settings["show_emoji_text"] else "❌"
     
     builder.button(
         text=f"{bound_status} Прив'язані емодзі / Bound Emojis",
         callback_data="toggle_bound"
-    )
-    builder.button(
-        text=f"{text_status} Текст емодзі / Emoji Text",
-        callback_data="toggle_text"
     )
     builder.adjust(1)
     return builder.as_markup()
@@ -38,8 +33,7 @@ async def cmd_settings(message: Message):
         "⚙️ <b>Налаштування відображення емодзі / Emoji Display Settings</b>\n\n"
         "Оберіть, що показувати поруч з преміум емодзі:\n"
         "Choose what to display next to premium emojis:\n\n"
-        "1. <b>Прив'язані емодзі</b> — стандартні емодзі, до яких прив'язані преміум емодзі.\n"
-        "2. <b>Текст емодзі</b> — назва/текстове значення прив'язаних емодзі.\n"
+        "<b>Прив'язані емодзі</b> — стандартні емодзі, до яких прив'язані преміум емодзі.\n"
     )
     await message.answer(text, reply_markup=get_settings_keyboard(settings), parse_mode="HTML")
 
@@ -51,8 +45,6 @@ async def cb_toggle_settings(callback: CallbackQuery):
     action = callback.data.split("_")[1]
     if action == "bound":
         settings["show_bound_emoji"] = not settings["show_bound_emoji"]
-    elif action == "text":
-        settings["show_emoji_text"] = not settings["show_emoji_text"]
         
     await update_user_settings(
         user_id,

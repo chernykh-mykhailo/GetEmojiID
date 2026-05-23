@@ -1,21 +1,10 @@
 from aiogram import Bot
-import emoji
 from src.utils.db import get_user_settings
 
-def get_emoji_suffix(emoji_str: str, show_bound: bool, show_text: bool) -> str:
-    if not emoji_str or (not show_bound and not show_text):
+def get_emoji_suffix(emoji_str: str, show_bound: bool) -> str:
+    if not emoji_str or not show_bound:
         return ""
-    
-    demojized = emoji.demojize(emoji_str).replace(":", "")
-    
-    if show_bound and show_text:
-        if emoji_str == demojized:
-            return f" ➔ {emoji_str}"
-        return f" ➔ {emoji_str} ({demojized})"
-    elif show_bound:
-        return f" ➔ {emoji_str}"
-    else: # show_text only
-        return f" ➔ ({demojized})"
+    return f" ➔ {emoji_str}"
 
 async def format_emoji_list(bot: Bot, pack_name: str, user_id: int) -> list[str]:
     try:
@@ -34,12 +23,11 @@ async def format_emoji_list(bot: Bot, pack_name: str, user_id: int) -> list[str]
         
         settings = await get_user_settings(user_id)
         show_bound = settings["show_bound_emoji"]
-        show_text = settings["show_emoji_text"]
         
         for i, sticker in enumerate(sticker_set.stickers, 1):
             if is_custom:
                 emoji_id = sticker.custom_emoji_id
-                suffix = get_emoji_suffix(sticker.emoji, show_bound, show_text)
+                suffix = get_emoji_suffix(sticker.emoji, show_bound)
                 line = f"{i:02d}) <code>{emoji_id}</code> <tg-emoji emoji-id=\"{emoji_id}\">{sticker.emoji}</tg-emoji>{suffix}\n"
             else:
                 line = f"{i:02d}) <code>{sticker.file_id}</code> {sticker.emoji if sticker.emoji else ''}\n"
