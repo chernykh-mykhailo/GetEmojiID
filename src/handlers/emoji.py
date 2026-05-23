@@ -1,6 +1,8 @@
 from aiogram import Router, F, Bot
 from aiogram.types import Message, CallbackQuery
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+from src.utils.db import get_user_settings
+from src.utils.formatter import get_emoji_suffix
 
 router = Router()
 
@@ -15,9 +17,11 @@ async def handle_sticker(message: Message, bot: Bot):
         if pack_name:
             builder.button(text="Whole pack", callback_data=f"pack_{pack_name}")
         
+        settings = await get_user_settings(message.from_user.id)
+        suffix = get_emoji_suffix(sticker.emoji, settings["show_bound_emoji"], settings["show_emoji_text"])
         response = (
             f"<b>Emoji ID:</b> <code>{emoji_id}</code> "
-            f"<tg-emoji emoji-id=\"{emoji_id}\">{sticker.emoji}</tg-emoji>"
+            f"<tg-emoji emoji-id=\"{emoji_id}\">{sticker.emoji}</tg-emoji>{suffix}"
         )
         await message.answer(response, reply_markup=builder.as_markup(), parse_mode="HTML")
     else:
@@ -91,9 +95,11 @@ async def handle_entities(message: Message, bot: Bot):
         if pack_name:
             builder.button(text="Whole pack", callback_data=f"pack_{pack_name}")
             
+        settings = await get_user_settings(message.from_user.id)
+        suffix = get_emoji_suffix(emoji_char, settings["show_bound_emoji"], settings["show_emoji_text"])
         response = (
             f"<b>Emoji ID:</b> <code>{emoji_id}</code> "
-            f"<tg-emoji emoji-id=\"{emoji_id}\">{emoji_char}</tg-emoji>"
+            f"<tg-emoji emoji-id=\"{emoji_id}\">{emoji_char}</tg-emoji>{suffix}"
         )
         await message.answer(response, reply_markup=builder.as_markup(), parse_mode="HTML")
         return
@@ -102,9 +108,18 @@ async def handle_entities(message: Message, bot: Bot):
     import re
     html_text = message.html_text
     
-    # Use temporary markers for IDs to avoid them being caught by general <code> replacement
+    settings = await get_user_settings(message.from_user.id)
+    show_bound = settings["show_bound_emoji"]
+    show_text = settings["show_emoji_text"]
+    
+    def replace_emoji(match):
+        emoji_id = match.group(1)
+        emoji_char = match.group(2)
+        suffix = get_emoji_suffix(emoji_char, show_bound, show_text)
+        return f"{emoji_char}{suffix} [<code>{emoji_id}</code>]"
+        
     pattern = re.compile(r'<tg-emoji emoji-id="(.*?)">(.*?)</tg-emoji>')
-    processed_html = pattern.sub(r'\2 [<code>\1</code>]', html_text)
+    processed_html = pattern.sub(replace_emoji, html_text)
     
     # Convert formatting tags to symbols (EXCEPT <code> for our IDs)
     processed_html = processed_html.replace("<b>", "**").replace("</b>", "**")
@@ -148,6 +163,9 @@ async def cb_one(callback: CallbackQuery, bot: Bot):
     stickers = await bot.get_custom_emoji_stickers([emoji_id])
     emoji_char = stickers[0].emoji if stickers else "?"
     
-    response = f"<b>Emoji ID:</b>\n1) <code>{emoji_id}</code> <tg-emoji emoji-id=\"{emoji_id}\">{emoji_char}</tg-emoji>"
+    settings = await get_user_settings(callback.from_user.id)
+    suffix = get_emoji_suffix(emoji_char, settings["show_bound_emoji"], settings["show_emoji_text"])
+    
+    response = f"<b>Emoji ID:</b>\n1) <code>{emoji_id}</code> <tg-emoji emoji-id=\"{emoji_id}\">{emoji_char}</tg-emoji>{suffix}"
     await callback.message.edit_text(response, parse_mode="HTML")
     await callback.answer()

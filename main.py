@@ -3,6 +3,7 @@ import logging
 from aiogram import Bot, Dispatcher
 from src.config import BOT_TOKEN
 from src.handlers import commands, packs, emoji
+from src.utils.db import init_db
 
 async def main():
     # Setup logging
@@ -10,6 +11,9 @@ async def main():
         level=logging.INFO,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
+    
+    # Initialize DB
+    await init_db()
     
     # Initialize bot and dispatcher
     bot = Bot(token=BOT_TOKEN)
