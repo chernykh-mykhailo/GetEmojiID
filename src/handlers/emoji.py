@@ -168,3 +168,56 @@ async def cb_one(callback: CallbackQuery, bot: Bot):
     response = f"<b>Emoji ID:</b>\n1) <code>{emoji_id}</code> <tg-emoji emoji-id=\"{emoji_id}\">{emoji_char}</tg-emoji>{suffix}"
     await callback.message.edit_text(response, parse_mode="HTML")
     await callback.answer()
+
+@router.message(F.text.regexp(r"^\d{13,21}$"))
+async def handle_emoji_id_text(message: Message, bot: Bot):
+    emoji_id = message.text.strip()
+    try:
+        stickers = await bot.get_custom_emoji_stickers([emoji_id])
+        if stickers:
+            sticker = stickers[0]
+            pack_name = sticker.set_name
+            builder = InlineKeyboardBuilder()
+            if pack_name:
+                builder.button(text="Whole pack", callback_data=f"pack_{pack_name}")
+            
+            settings = await get_user_settings(message.from_user.id)
+            suffix = get_emoji_suffix(sticker.emoji, settings["show_bound_emoji"])
+            response = (
+                f"<b>Emoji found for ID</b> <code>{emoji_id}</code>:\n"
+                f"<tg-emoji emoji-id=\"{emoji_id}\">{sticker.emoji}</tg-emoji>{suffix}"
+            )
+            await message.answer(response, reply_markup=builder.as_markup(), parse_mode="HTML")
+        else:
+            await message.answer(f"❌ Custom emoji with ID <code>{emoji_id}</code> not found or it's not a valid emoji ID.", parse_mode="HTML")
+    except Exception as e:
+        await message.answer(f"❌ Error fetching emoji info:\n<code>{str(e)}</code>", parse_mode="HTML")
+
+@router.message(F.text.regexp(r"^[a-zA-Z0-9_\-]{50,250}$"))
+async def handle_file_id_text(message: Message, bot: Bot):
+    file_id = message.text.strip()
+    
+    methods = [
+        ("Sticker", bot.send_sticker),
+        ("Animation", bot.send_animation),
+        ("Photo", bot.send_photo),
+        ("Video", bot.send_video),
+        ("Document", bot.send_document),
+        ("Audio", bot.send_audio),
+        ("Voice", bot.send_voice),
+        ("Video Note", bot.send_video_note)
+    ]
+    
+    for label, method in methods:
+        try:
+            # We pass the media as kwargs.
+            # e.g., sticker=file_id, animation=file_id, photo=file_id, etc.
+            param_name = label.lower().replace(" ", "_")
+            await method(chat_id=message.chat.id, **{param_name: file_id}, reply_to_message_id=message.message_id)
+            await message.answer(f"✅ Resolved as <b>{label}</b>!", parse_mode="HTML")
+            return
+        except Exception:
+            continue
+            
+    await message.answer("❌ Could not resolve this file ID (it might be invalid, expired, or belong to another bot).", parse_mode="HTML")
+
