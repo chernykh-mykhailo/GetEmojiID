@@ -1,40 +1,50 @@
-# Telegram Premium Emoji ID Bot
+# 🎯 Telegram Premium Emoji & Sticker ID Bot
 
-Цей бот допомагає швидко отримувати ID преміум-емодзі для використання в розробці ботів або кастомізації профілів.
+<p align="left">
+  <b>🇺🇸 English</b> | <a href="./README.ua.md">🇺🇦 Українська</a>
+</p>
 
-## 🚀 Можливості
+A Telegram bot designed to quickly retrieve system IDs for premium custom emojis, stickers, GIFs, and other media files to facilitate bot development and profile customization.
 
-- **Аналіз паків (емодзі та стікерів)**: Надішліть посилання на пак (наприклад, `https://t.me/addemoji/...` або `https://t.me/addstickers/...`), і бот видасть повний список усіх елементів з їхніми ID.
-- **Окремі медіа-файли**: Відправте преміум-емодзі, стікер, GIF, фото, відео, документ чи голосове повідомлення, і бот відразу покаже його ID.
-- **Обробка тексту з емодзі**: Надішліть будь-який текст із преміум-емодзі, і бот поверне його, автоматично додавши ID після кожного емодзі у форматі `[ID]`.
-- **Зручне копіювання**: Всі ID виводяться у форматі `<code>`, тому їх можна скопіювати одним кліком.
+---
 
-## 🛠 Технології
+## 🚀 Features
 
-- **Python 3.11+**
-- **Aiogram 3.x**
-- **Docker & Docker Compose**
+- **Pack Analysis**: Send any sticker or emoji pack link (e.g. `https://t.me/addemoji/...` or `https://t.me/addstickers/...`), and the bot returns a complete list of all items with their corresponding unique IDs.
+- **Single File Processor**: Send any custom premium emoji, sticker, animated GIF, video, photo, document, or voice note to immediately get its raw Telegram file/custom emoji ID.
+- **Inline Text Parsing**: Send any text paragraph containing premium custom emojis, and the bot will return the formatted string with the parsed ID appended after each emoji in `[ID]` format.
+- **One-Click Copying**: All IDs are formatted as monospace HTML code (`<code>`), enabling one-click copying on all Telegram clients.
 
-## 📦 Встановлення та запуск
+## 🛠️ Tech Stack
 
-1. Створіть файл `.env` та додайте ваш токен:
-   ```env
-   BOT_TOKEN=ваш_токен_тут
-   ```
+- **Language**: Python 3.11+
+- **Bot Engine**: `aiogram 3.x`
+- **Deployment**: Docker, Docker Compose
 
-2. Запуск через **Docker** (рекомендовано):
-   ```bash
-   docker-compose up -d --build
-   ```
+## 📁 Project Structure
 
-3. Або через **Python**:
-   ```bash
-   pip install -r requirements.txt
-   python main.py
-   ```
+- `src/handlers/` — Message handlers, pack links parser, and media validators.
+- `src/utils/` — Message formatting helper functions.
+- `main.py` — Bot initialization and pooling loop.
 
-## 📂 Структура проекту
+## ⚙️ Configuration & Run
 
-- `src/handlers/` — логіка обробки команд, паків та емодзі.
-- `src/utils/` — допоміжні функції форматування.
-- `main.py` — точка входу.
+### 1. Environment Settings
+Create a `.env` file in the root directory:
+```env
+BOT_TOKEN=your_telegram_bot_token
+```
+
+### 2. Deploy with Docker (Recommended)
+```bash
+docker compose up -d --build
+```
+
+### 3. Run Locally
+```bash
+pip install -r requirements.txt
+python main.py
+```
+
+---
+*Developed by Mykhailo Chernykh.*
